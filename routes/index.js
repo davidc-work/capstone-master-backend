@@ -87,6 +87,22 @@ router.get("/mutual-funds", async (req,res) => {
   res.json(funds);
 });
 
+router.get("/mutual-funds/:id", async (req,res) => {
+  let fund = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/" + req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  
+  let stocksToSend = [];
+  stocks.forEach(stock => {
+    if(stock.mutualFundIds !== ""){
+      stock.mutualFundIds = stock.mutualFundIds.toString().split(",");
+      stock.mutualFundIds.includes(fund.id.toString()) ? stocksToSend.push(stock) : null;
+    }
+  })
+  fund.stocks = stocksToSend;
+
+  res.json(fund);
+});
+
 //GET all stocks for stocks page
 // Works //
 router.get("/stocks", async (req,res) => {
@@ -102,7 +118,7 @@ router.get("/stocks", async (req,res) => {
 router.get("/stocks/:id", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks"+req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks/"+req.params.id).then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
