@@ -87,12 +87,22 @@ router.get("/mutual-funds", async (req,res) => {
   res.json(funds);
 });
 
-//GET all stocks for stock page
+//GET all stocks for stocks page
 // Works //
 router.get("/stocks", async (req,res) => {
   console.log(req.body);
   //staging api call
   let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  //Return data or response to frontend  
+  res.json(stocks);
+});
+
+//GET specific stock for stock page
+// Works //
+router.get("/stocks/:id", async (req,res) => {
+  console.log(req.body);
+  //staging api call
+  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks"+req.params.id).then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
