@@ -13,6 +13,10 @@ var jsonParser = bodyParser.json();
   res.render('index', { title: 'Express' });
 });*/
 
+router.post('/create-user', jsonParser, (req, res) => {
+
+});
+
 router.post('/purchase-fund', jsonParser, (req, res) => {
   if (!(req.body.fund_id && req.body.quantity && req.body.customerId)) return res.send('Missing fields!');
   (async () => {
@@ -20,6 +24,7 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
     try {
       var fund = (await axios.get('https://immense-brushlands-56087.herokuapp.com/funds/' + req.body.fund_id)).data;
       fund.price = +fund.price.slice(1);
+      console.log('get fund success');
     } catch (e) { return res.send(e); }
     
     // transaction
@@ -31,6 +36,7 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
         pricePerUnit: fund.price,
         CustomerId: req.body.customerId
       })).data;
+      console.log('make transaction success');
     } catch (e) { return res.send(e); }
 
     if (transaction.error) return res.send(transaction.error);
@@ -38,8 +44,10 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
     try {
       var portfolio = (await axios.post('https://user-profile-transaction.herokuapp.com/portfolio', {
         CustomerId: req.body.customerId,
-        fundKey: fund.id
+        fundKey: fund.id,
+        quantity: req.body.quantity
       })).data;
+      console.log('add to portfolio success');
     } catch (e) { return res.send(e); }
 
     if (portfolio.error) return res.send(portfolio.error);
