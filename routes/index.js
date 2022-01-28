@@ -87,6 +87,26 @@ router.get("/mutual-funds", async (req,res) => {
   res.json(funds);
 });
 
+router.get("/mutual-funds/:id", async (req,res) => {
+  console.log(req.body);
+  //staging api call
+  let fund = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/" + req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  
+  //find and match each stocks that corresponds to each mutual fund
+  let stocksToSend = [];
+  stocks.forEach(stock => {
+    if(stock.mutualFundIds !== ""){
+      stock.mutualFundIds = stock.mutualFundIds.toString().split(",");
+      console.log(stock.mutualFundIds);
+      stock.mutualFundIds.includes(fund.id.toString()) ? stocksToSend.push(stock) : null;
+    }
+  })
+  fund.stocks = stocksToSend;
+  //Return data or response to frontend  
+  res.json(fund);
+});
+
 //GET all stocks for stock page
 // Works //
 router.get("/stocks", async (req,res) => {
