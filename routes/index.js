@@ -126,12 +126,17 @@ router.get("/stocks/:id", async (req,res) => {
 //GET specific user profile with: transactions & portfolio
 // Works //
 router.get("/users/:id", async (req,res) => {
-  console.log(req.body);
   //staging api call
   let profile = await axios.get(`http://user-profile-transaction.herokuapp.com/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
   profile.transactions = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
-  //Return data or response to frontend
+  let funds = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/").then(({ data }) => data).catch(err => err);
+  // profile.funds = funds.filter(f => ids.includes(f.id));
+  profile.ClientPortfolios.forEach(portfolio => {
+    portfolio.fundData = funds.find(f => portfolio.fundKey === f.id)
+  })
+  console.log(profile.funds)
   res.json(profile);
+  //Return data or response to frontend
 });
 
 //POST a deposit transaction where:
