@@ -34,6 +34,7 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
         itemDescription: fund.name,
         quantity: req.body.quantity,
         pricePerUnit: fund.price,
+        fund_id: fund.id,
         CustomerId: req.body.customerId
       })).data;
       console.log('make transaction success');
@@ -138,6 +139,12 @@ router.get("/users/:id", async (req,res) => {
   res.json(profile);
   //Return data or response to frontend
 });
+
+//GET filtered transactions based on fund id
+router.get("/users/:userId/fund/:fundId", async (req, res) => {
+  let transactions = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
+  return transactions.filter(transaction => transaction.mutualFundId === req.params.fundId)
+})
 
 //POST a deposit transaction where:
 // req.body = {
