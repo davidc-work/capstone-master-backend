@@ -142,8 +142,9 @@ router.get("/users/:id", async (req,res) => {
 
 //GET filtered transactions based on fund id
 router.get("/users/:userId/fund/:fundId", async (req, res) => {
-  let transactions = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
-  return transactions.filter(transaction => transaction.mutualFundId === req.params.fundId)
+  let customer = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
+  console.log(customer.Transactions)
+  res.json(customer.Transactions.filter(transaction => transaction.fund_id === +req.params.fundId))
 })
 
 //POST a deposit transaction where:
