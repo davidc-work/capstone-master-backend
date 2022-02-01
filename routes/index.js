@@ -41,8 +41,7 @@ router.post('/signup', jsonParser, async (req, res) => {
     var clientData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
       customer_id: signupData.id
     })).data;
-    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/profile', {
-      ClientId: signupData.id,
+    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/profile/' + signupData.id, {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
