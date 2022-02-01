@@ -8,13 +8,58 @@ const { Socket } = require('dgram');
 
 var jsonParser = bodyParser.json();
 
-/* GET home page. */
-/*router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});*/
+router.post('/signup', jsonParser, async (req, res) => {
+  console.log(req.body);
+  if (!req.body.username || !req.body.password) return res.send({error: 'missing fields!'})
 
-router.post('/create-user', jsonParser, (req, res) => {
+  let signup, i = 0;
+  while (!signup && i < 10) {
+    try {
+      console.log('waiting for post')
+      signup = (await axios.post('https://morning-plains-19920.herokuapp.com/signup', {
+        username: req.body.username,
+        password: req.body.password
+      })).data;
+      console.log('post complete');
+    } catch (e) { console.log('error', i) }
+    i++;
+  }
 
+  return res.send(signup || {error: 'signup error'});
+});
+
+router.post('/login', async (req, res) => {
+  if (!req.body.username || !req.body.password) return res.send({error: 'missing fields!'});
+
+  let loginData, i = 0;
+  while (!loginData && i < 10) {
+    try {
+      loginData = (await axios.post('https://morning-plains-19920.herokuapp.com/login', {
+        username: req.body.username,
+        password: req.body.password
+      })).data;
+    } catch (e) { console.log('error', i) }
+    i++;
+  }
+
+  res.send(loginData || {error: 'login error'});
+});
+
+router.post('/auth', async (req, res) => {
+  if (!req.body.username || !req.body.sessionID) return res.send({error: 'missing fields!'});
+ 
+  let authData, i = 0;
+  while (!authData && i < 10) {
+    try {
+      authData = (await axios.post('https://morning-plains-19920.herokuapp.com/auth', {
+        username: req.body.username,
+        sessionID: req.body.sessionID
+      })).data;
+    } catch (e) { console.log('error', i) }
+    i++;
+  }
+
+  res.send(authData || {error: 'authentication error'});
 });
 
 router.post('/purchase-fund', jsonParser, (req, res) => {
