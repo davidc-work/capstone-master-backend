@@ -36,12 +36,12 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (transactionData.error) return res.send(transactionData);
 
   try {
-    var portfolioData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
+    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
       customer_id: signupData.id
     })).data;
   } catch (e) { console.log(e) }
 
-  if (!portfolioData) return res.send({error: 'portfolio error'});
+  if (!profileData) return res.send({error: 'profile error'});
 
   return res.send(signupData);
 });
