@@ -33,7 +33,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   } catch (e) { console.log(e) }
 
   if (!transactionData) return res.send({error: 'transaction error'});
-  if (transactionData.error) return res.send(transactionData.error);
+  if (transactionData.error) return res.send(transactionData);
 
   try {
     var portfolioData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
