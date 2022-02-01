@@ -24,6 +24,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   }
 
   if (!signupData) return res.send({error: 'signup error'});
+  if (signupData.error) return res.send(signupData.error);
 
   try {
     var transactionData = (await axios.post('https://transaction-microservice-v1.herokuapp.com/customers/create', {
@@ -32,6 +33,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   } catch (e) { console.log(e) }
 
   if (!transactionData) return res.send({error: 'transaction error'});
+  if (transactionData.error) return res.send(transactionData.error);
 
   try {
     var portfolioData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
