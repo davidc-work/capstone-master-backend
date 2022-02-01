@@ -12,20 +12,36 @@ router.post('/signup', jsonParser, async (req, res) => {
   console.log(req.body);
   if (!req.body.username || !req.body.password) return res.send({error: 'missing fields!'})
 
-  let signup, i = 0;
-  while (!signup && i < 10) {
+  let signupData, i = 0;
+  while (!signupData && i < 10) {
     try {
-      console.log('waiting for post')
-      signup = (await axios.post('https://morning-plains-19920.herokuapp.com/signup', {
+      signupData = (await axios.post('https://morning-plains-19920.herokuapp.com/signup', {
         username: req.body.username,
         password: req.body.password
       })).data;
-      console.log('post complete');
     } catch (e) { console.log('error', i) }
     i++;
   }
 
-  return res.send(signup || {error: 'signup error'});
+  if (!signupData) return res.send({error: 'signup error'});
+
+  try {
+    var transactionData = (await axios.post('https://transaction-microservice-v1.herokuapp.com/customers/create', {
+      id: signupData.id
+    })).data;
+  } catch (e) { console.log(e) }
+
+  if (!transactionData) return res.send({error: 'transaction error'});
+
+  try {
+    var portfolioData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
+      customer_id: signupData.id
+    })).data;
+  } catch (e) { console.log(e) }
+
+  if (!portfolioData) return res.send({error: 'portfolio error'});
+
+  return res.send(signupData);
 });
 
 router.post('/login', async (req, res) => {
