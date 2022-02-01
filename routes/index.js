@@ -24,7 +24,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   }
 
   if (!signupData) return res.send({error: 'signup error'});
-  if (signupData.error) return res.send(signupData.error);
+  if (signupData.error) return res.send(signupData);
 
   try {
     var transactionData = (await axios.post('https://transaction-microservice-v1.herokuapp.com/customers/create', {
