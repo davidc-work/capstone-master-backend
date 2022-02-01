@@ -79,6 +79,7 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
         itemDescription: fund.name,
         quantity: req.body.quantity,
         pricePerUnit: fund.price,
+        fund_id: fund.id,
         CustomerId: req.body.customerId
       })).data;
       console.log('make transaction success');
@@ -109,7 +110,6 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
 // params = {
 //   id: Mutual Fund Id
 // }
-// Works //
 router.get("/mutual-funds", async (req,res) => {
   console.log(req.body);
   //staging api call
@@ -149,7 +149,6 @@ router.get("/mutual-funds/:id", async (req,res) => {
 });
 
 //GET all stocks for stocks page
-// Works //
 router.get("/stocks", async (req,res) => {
   console.log(req.body);
   //staging api call
@@ -159,7 +158,6 @@ router.get("/stocks", async (req,res) => {
 });
 
 //GET specific stock for stock page
-// Works //
 router.get("/stocks/:id", async (req,res) => {
   console.log(req.body);
   //staging api call
@@ -169,7 +167,6 @@ router.get("/stocks/:id", async (req,res) => {
 });
 
 //GET specific user profile with: transactions & portfolio
-// Works //
 router.get("/users/:id", async (req,res) => {
   //staging api call
   let profile = await axios.get(`http://user-profile-transaction.herokuapp.com/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
@@ -184,13 +181,19 @@ router.get("/users/:id", async (req,res) => {
   //Return data or response to frontend
 });
 
+//GET filtered transactions based on fund id
+router.get("/users/:userId/fund/:fundId", async (req, res) => {
+  let customer = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
+  console.log(customer.Transactions)
+  res.json(customer.Transactions.filter(transaction => transaction.fund_id === +req.params.fundId))
+})
+
 //POST a deposit transaction where:
 // req.body = {
 //   type: "deposit" (Must be lowercase string),
 //   amount: Integer,
 //   CustomerId, Integer
 // }
-// Works //
 router.post("/transactions/deposit", async (req,res) => {
   console.log(req.body);
   //staging api call
@@ -207,7 +210,6 @@ router.post("/transactions/deposit", async (req,res) => {
 //   quantity: Integer (Quantity to sell will fail if greater than available or if 0),
 //   CustomerId: Integer
 // }
-// Works //
 router.post("/transactions/sell", async (req,res) => {
   console.log(req.body);
   //staging api call
@@ -222,3 +224,16 @@ router.post("/transactions/sell", async (req,res) => {
   res.json(temp)
 });
 module.exports = router;
+
+//PUT on a user profile
+router.put("/user/:id", async (req, res) => {
+  let keys = Object.keys(req.body);
+  let keyBank = ["firstName", "lastName", "email", "birthdate" , "age"];
+  //Deletes any unecessary req.body keys
+  for (let key of keys){
+    if(!keyBank.includes(key)){
+      delete req.body[key]
+    }
+  }
+  res.json(await axios.put("http://user-profile-transaction.herokuapp.com/profile/"+ req.params.id, req.body).then(({ data }) => data).catch(err => err));
+})
