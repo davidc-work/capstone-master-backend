@@ -10,7 +10,9 @@ var jsonParser = bodyParser.json();
 
 router.post('/signup', jsonParser, async (req, res) => {
   console.log(req.body);
-  if (!req.body.username || !req.body.password) return res.send({error: 'missing fields!'})
+  if (!req.body.username || !req.body.password ||
+    !req.body.firstName || !req.body.lastName || 
+    !req.body.email || !req.body.birthdate) return res.send({error: 'missing fields!'})
 
   let signupData, i = 0;
   while (!signupData && i < 10) {
@@ -36,12 +38,19 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (transactionData.error) return res.send(transactionData);
 
   try {
-    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
+    var clientData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
       customer_id: signupData.id
+    })).data;
+    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/profile', {
+      ClientId: signupData.id,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      birthdate: req.body.birthdate
     })).data;
   } catch (e) { console.log(e) }
 
-  if (!profileData) return res.send({error: 'profile error'});
+  if (!clientData || !profileData) return res.send({error: 'profile error'});
 
   return res.send(signupData);
 });
