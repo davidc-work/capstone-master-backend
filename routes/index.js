@@ -239,7 +239,8 @@ router.post("/users/:id", authenticate, async (req,res) => {
   profile.ClientPortfolios.forEach(portfolio => {
     portfolio.fundData = funds.find(f => portfolio.fundKey === f.id)
   })
-  console.log(profile.funds)
+  
+  profile.username = req.body.username;
   res.json(profile);
   //Return data or response to frontend
 });
