@@ -226,6 +226,8 @@ router.get("/stocks/:id", async (req,res) => {
 
 //GET specific user profile with: transactions & portfolio
 router.post("/users/:id", authenticate, async (req,res) => {
+  if (req.customerId != req.params.id) return res.send({error: 'user mismatch'});
+  
   //staging api call
   let profile = await axios.get(microservices.transactions + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
   profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
