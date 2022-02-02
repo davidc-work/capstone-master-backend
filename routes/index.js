@@ -32,7 +32,7 @@ function authenticate(req, res, next) {
     }
     
     if (authData) {
-      req.customerId = authData.id;
+      req.customerId = authData.customerID;
       next();
     }
     else return res.send({error: 'authentication error'});
@@ -226,13 +226,16 @@ router.get("/stocks/:id", async (req,res) => {
 
 //GET specific user profile with: transactions & portfolio
 router.post("/users/:id", authenticate, async (req,res) => {
+  console.log(req.customerId);
+  console.log(req.params.id);
   if (req.customerId != req.params.id) return res.send({error: 'user mismatch'});
-  
+
   //staging api call
-  let profile = await axios.get(microservices.transactions + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
+  let profile = await axios.get(microservices.profile + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
   profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
   let funds = await axios.get(microservices.mutualFunds + "/funds/").then(({ data }) => data).catch(err => err);
   // profile.funds = funds.filter(f => ids.includes(f.id));
+  console.log(profile);
   profile.ClientPortfolios.forEach(portfolio => {
     portfolio.fundData = funds.find(f => portfolio.fundKey === f.id)
   })
