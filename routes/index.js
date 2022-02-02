@@ -36,7 +36,7 @@ function authenticate(req, res, next) {
     if (authData) {
       if (!authData.error) {
         req.customerId = authData.customerID;
-        next();
+        return next();
       }
     }
     
