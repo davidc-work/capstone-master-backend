@@ -167,7 +167,7 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
 // params = {
 //   id: Mutual Fund Id
 // }
-router.get("/mutual-funds", authenticate, async (req,res) => {
+router.post("/mutual-funds", authenticate, async (req,res) => {
   console.log(req.body);
   console.log('customerId = ' + req.customerId);
   //staging api call
