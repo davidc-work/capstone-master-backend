@@ -8,6 +8,37 @@ const { Socket } = require('dgram');
 
 var jsonParser = bodyParser.json();
 
+const microservices = {
+  auth: 'https://morning-plains-19920.herokuapp.com',
+  transactions: 'https://transaction-microservice-v1.herokuapp.com',
+  profile: 'https://user-profile-transaction.herokuapp.com',
+  mutualFunds: 'https://immense-brushlands-56087.herokuapp.com',
+  stocks: 'http://stocks-microservice.herokuapp.com'
+}
+
+function authenticate(req, res, next) {
+  (async () => {
+    if (!req.body.username || !req.body.sessionID) return res.send({error: 'missing fields!'});
+ 
+    let authData, i = 0;
+    while (!authData && i < 10) {
+      try {
+        authData = (await axios.post(microservices.auth + '/auth', {
+          username: req.body.username,
+          sessionID: req.body.sessionID
+        })).data;
+      } catch (e) { console.log('error', i) }
+      i++;
+    }
+    
+    if (authData) {
+      req.customerId = authData.id;
+      next();
+    }
+    else return res.send({error: 'authentication error'});
+  })();
+}
+
 router.post('/signup', jsonParser, async (req, res) => {
   console.log(req.body);
   if (!req.body.username || !req.body.password ||
@@ -17,7 +48,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   let signupData, i = 0;
   while (!signupData && i < 10) {
     try {
-      signupData = (await axios.post('https://morning-plains-19920.herokuapp.com/signup', {
+      signupData = (await axios.post(microservices.auth + '/signup', {
         username: req.body.username,
         password: req.body.password
       })).data;
@@ -29,7 +60,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (signupData.error) return res.send(signupData);
 
   try {
-    var transactionData = (await axios.post('https://transaction-microservice-v1.herokuapp.com/customers/create', {
+    var transactionData = (await axios.post(microservices.transactions + '/customers/create', {
       id: signupData.id
     })).data;
   } catch (e) { console.log(e) }
@@ -38,10 +69,10 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (transactionData.error) return res.send(transactionData);
 
   try {
-    var clientData = (await axios.post('https://user-profile-transaction.herokuapp.com/customer', {
+    var clientData = (await axios.post(microservices.profile + '/customer', {
       customer_id: signupData.id
     })).data;
-    var profileData = (await axios.post('https://user-profile-transaction.herokuapp.com/profile/' + signupData.id, {
+    var profileData = (await axios.post(microservices.profile + '/profile/' + signupData.id, {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
@@ -60,7 +91,7 @@ router.post('/login', async (req, res) => {
   let loginData, i = 0;
   while (!loginData && i < 10) {
     try {
-      loginData = (await axios.post('https://morning-plains-19920.herokuapp.com/login', {
+      loginData = (await axios.post(microservices.auth + '/login', {
         username: req.body.username,
         password: req.body.password
       })).data;
@@ -77,7 +108,7 @@ router.post('/auth', async (req, res) => {
   let authData, i = 0;
   while (!authData && i < 10) {
     try {
-      authData = (await axios.post('https://morning-plains-19920.herokuapp.com/auth', {
+      authData = (await axios.post(microservices.auth + '/auth', {
         username: req.body.username,
         sessionID: req.body.sessionID
       })).data;
@@ -88,19 +119,19 @@ router.post('/auth', async (req, res) => {
   res.send(authData || {error: 'authentication error'});
 });
 
-router.post('/purchase-fund', jsonParser, (req, res) => {
+router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
   if (!(req.body.fund_id && req.body.quantity && req.body.customerId)) return res.send('Missing fields!');
   (async () => {
     // get fund
     try {
-      var fund = (await axios.get('https://immense-brushlands-56087.herokuapp.com/funds/' + req.body.fund_id)).data;
+      var fund = (await axios.get(microservices.mutualFunds + '/funds/' + req.body.fund_id)).data;
       fund.price = +fund.price.slice(1);
       console.log('get fund success');
     } catch (e) { return res.send(e); }
     
     // transaction
     try {
-      var transaction = (await axios.post('https://transaction-microservice-v1.herokuapp.com/transactions/create', {
+      var transaction = (await axios.post(microservices.transactions + '/transactions/create', {
         type: 'purchase',
         itemDescription: fund.name,
         quantity: req.body.quantity,
@@ -114,7 +145,7 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
     if (transaction.error) return res.send(transaction.error);
 
     try {
-      var portfolio = (await axios.post('https://user-profile-transaction.herokuapp.com/portfolio', {
+      var portfolio = (await axios.post(microservices.profile + '/portfolio', {
         CustomerId: req.body.customerId,
         fundKey: fund.id,
         quantity: req.body.quantity
@@ -136,11 +167,12 @@ router.post('/purchase-fund', jsonParser, (req, res) => {
 // params = {
 //   id: Mutual Fund Id
 // }
-router.get("/mutual-funds", async (req,res) => {
+router.get("/mutual-funds", authenticate, async (req,res) => {
   console.log(req.body);
+  console.log('customerId = ' + req.customerId);
   //staging api call
-  let funds = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds").then(({ data }) => data).catch(err => err);
-  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  let funds = await axios.get(microservices.mutualFunds + "/funds").then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
   // console.log(stocks);
   funds.forEach(fund => {
     //find and match each stocks that corresponds to each mutual fund
@@ -159,8 +191,8 @@ router.get("/mutual-funds", async (req,res) => {
 });
 
 router.get("/mutual-funds/:id", async (req,res) => {
-  let fund = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/" + req.params.id).then(({ data }) => data).catch(err => err);
-  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  let fund = await axios.get(microservices.mutualFunds + "/funds/" + req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
   
   let stocksToSend = [];
   stocks.forEach(stock => {
@@ -178,7 +210,7 @@ router.get("/mutual-funds/:id", async (req,res) => {
 router.get("/stocks", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks").then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
@@ -187,7 +219,7 @@ router.get("/stocks", async (req,res) => {
 router.get("/stocks/:id", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let stocks = await axios.get("http://stocks-microservice.herokuapp.com/stocks/"+req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(microservices.stocks + "/stocks/"+req.params.id).then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
@@ -195,9 +227,9 @@ router.get("/stocks/:id", async (req,res) => {
 //GET specific user profile with: transactions & portfolio
 router.get("/users/:id", async (req,res) => {
   //staging api call
-  let profile = await axios.get(`http://user-profile-transaction.herokuapp.com/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
-  profile.transactions = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
-  let funds = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/").then(({ data }) => data).catch(err => err);
+  let profile = await axios.get(microservices.transactions + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
+  profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
+  let funds = await axios.get(microservices.mutualFunds + "/funds/").then(({ data }) => data).catch(err => err);
   // profile.funds = funds.filter(f => ids.includes(f.id));
   profile.ClientPortfolios.forEach(portfolio => {
     portfolio.fundData = funds.find(f => portfolio.fundKey === f.id)
@@ -209,7 +241,7 @@ router.get("/users/:id", async (req,res) => {
 
 //GET filtered transactions based on fund id
 router.get("/users/:userId/fund/:fundId", async (req, res) => {
-  let customer = await axios.get(`https://transaction-microservice-v1.herokuapp.com/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
+  let customer = await axios.get(microservices.transactions + `/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
   if(!customer){
     res.json({error: "No user found."});
   } else {
@@ -226,7 +258,7 @@ router.get("/users/:userId/fund/:fundId", async (req, res) => {
 router.post("/transactions/deposit", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let temp = await axios.post("https://transaction-microservice-v1.herokuapp.com/transactions/create", req.body).then(({ data }) => data).catch(err => err);
+  let temp = await axios.post(microservices.transactions + "/transactions/create", req.body).then(({ data }) => data).catch(err => err);
   console.log(temp)
   //Return data or response to frontend  
   res.send(temp)
@@ -242,12 +274,12 @@ router.post("/transactions/deposit", async (req,res) => {
 router.post("/transactions/sell", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let fund = await axios.get("https://immense-brushlands-56087.herokuapp.com/funds/"+req.body.mutualFundId).then(({ data }) => data).catch(err => err);
+  let fund = await axios.get(microservices.mutualFunds + "/funds/"+req.body.mutualFundId).then(({ data }) => data).catch(err => err);
   req.body.itemDescription = fund.name;
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
-  let temp = await axios.post("https://transaction-microservice-v1.herokuapp.com/transactions/sell", req.body).then(({ data }) => data).catch(err => err);
+  let temp = await axios.post(microservices.transactions + "/transactions/sell", req.body).then(({ data }) => data).catch(err => err);
   console.log(temp)
   //Return data or response to frontend  
   res.json(temp)
@@ -264,5 +296,5 @@ router.put("/user/:id", async (req, res) => {
       delete req.body[key]
     }
   }
-  res.json(await axios.put("http://user-profile-transaction.herokuapp.com/profile/"+ req.params.id, req.body).then(({ data }) => data).catch(err => err));
+  res.json(await axios.put(microservices.profile + "/profile/"+ req.params.id, req.body).then(({ data }) => data).catch(err => err));
 })
