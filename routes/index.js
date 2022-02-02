@@ -30,12 +30,17 @@ function authenticate(req, res, next) {
       } catch (e) { console.log('error', i) }
       i++;
     }
+
+    console.log(authData);
     
     if (authData) {
-      req.customerId = authData.customerID;
-      next();
+      if (!authData.error && !authData.err) {
+        req.customerId = authData.customerID;
+        return next();
+      }
     }
-    else return res.send({error: 'authentication error'});
+    
+    return res.send({error: authData.error || authData.err || 'authentication error'});
   })();
 }
 
