@@ -122,7 +122,7 @@ router.post('/auth', async (req, res) => {
 router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
   if (!(req.body.fund_id && req.body.quantity && req.body.customerId)) return res.send('Missing fields!');
   if (req.body.customerId != req.customerId) return res.send({error: 'user mismatch'});
-  
+
   (async () => {
     // get fund
     try {
@@ -146,9 +146,10 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
 
     if (transaction.error) return res.send(transaction.error);
 
+    console.log('attempting portfolio addition');
     try {
       var portfolio = (await axios.post(microservices.profile + '/portfolio', {
-        CustomerId: req.body.customerId,
+        customer_id: req.body.customerId,
         fundKey: fund.id,
         quantity: req.body.quantity
       })).data;
