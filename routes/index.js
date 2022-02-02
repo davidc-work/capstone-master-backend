@@ -167,7 +167,7 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
 // params = {
 //   id: Mutual Fund Id
 // }
-router.post("/mutual-funds", authenticate, async (req,res) => {
+router.post("/mutual-funds", async (req,res) => {
   console.log(req.body);
   console.log('customerId = ' + req.customerId);
   //staging api call
@@ -225,7 +225,7 @@ router.get("/stocks/:id", async (req,res) => {
 });
 
 //GET specific user profile with: transactions & portfolio
-router.get("/users/:id", async (req,res) => {
+router.get("/users/:id", authenticate, async (req,res) => {
   //staging api call
   let profile = await axios.get(microservices.transactions + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
   profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
@@ -240,7 +240,7 @@ router.get("/users/:id", async (req,res) => {
 });
 
 //GET filtered transactions based on fund id
-router.get("/users/:userId/fund/:fundId", async (req, res) => {
+router.get("/users/:userId/fund/:fundId", authenticate, async (req, res) => {
   let customer = await axios.get(microservices.transactions + `/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
   if(!customer){
     res.json({error: "No user found."});
@@ -255,7 +255,7 @@ router.get("/users/:userId/fund/:fundId", async (req, res) => {
 //   amount: Integer,
 //   CustomerId, Integer
 // }
-router.post("/transactions/deposit", async (req,res) => {
+router.post("/transactions/deposit", authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
   let temp = await axios.post(microservices.transactions + "/transactions/create", req.body).then(({ data }) => data).catch(err => err);
@@ -271,7 +271,7 @@ router.post("/transactions/deposit", async (req,res) => {
 //   quantity: Integer (Quantity to sell will fail if greater than available or if 0),
 //   CustomerId: Integer
 // }
-router.post("/transactions/sell", async (req,res) => {
+router.post("/transactions/sell", authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
   let fund = await axios.get(microservices.mutualFunds + "/funds/"+req.body.mutualFundId).then(({ data }) => data).catch(err => err);
@@ -287,7 +287,7 @@ router.post("/transactions/sell", async (req,res) => {
 module.exports = router;
 
 //PUT on a user profile
-router.put("/user/:id", async (req, res) => {
+router.put("/user/:id", authenticate, async (req, res) => {
   let keys = Object.keys(req.body);
   let keyBank = ["firstName", "lastName", "email", "birthdate" , "age"];
   //Deletes any unecessary req.body keys
