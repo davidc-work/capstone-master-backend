@@ -288,6 +288,10 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
+  let temp2 = await axios.delete(`http://user-profile-transaction.herokuapp.com/${req.body.CustomerId}/${req.body.fundKey}/${req.body.quantity}`)
+  if(!temp2) {
+    return res.json({error: "something broke"})
+  }
   let temp = await axios.post(microservices.transactions + "/transactions/sell", req.body).then(({ data }) => data).catch(err => err);
   console.log(temp)
   //Return data or response to frontend  
