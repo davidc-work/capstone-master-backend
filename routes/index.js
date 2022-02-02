@@ -30,6 +30,8 @@ function authenticate(req, res, next) {
       } catch (e) { console.log('error', i) }
       i++;
     }
+
+    console.log(authData);
     
     if (authData) {
       req.customerId = authData.customerID;
