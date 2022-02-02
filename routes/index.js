@@ -34,10 +34,13 @@ function authenticate(req, res, next) {
     console.log(authData);
     
     if (authData) {
-      req.customerId = authData.customerID;
-      next();
+      if (!authData.error) {
+        req.customerId = authData.customerID;
+        next();
+      }
     }
-    else return res.send({error: 'authentication error'});
+    
+    return res.send({error: authData.error || 'authentication error'});
   })();
 }
 
