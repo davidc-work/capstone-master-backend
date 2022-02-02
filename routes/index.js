@@ -167,7 +167,7 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
 // params = {
 //   id: Mutual Fund Id
 // }
-router.post("/mutual-funds", async (req,res) => {
+router.get("/mutual-funds", async (req,res) => {
   console.log(req.body);
   console.log('customerId = ' + req.customerId);
   //staging api call
@@ -225,7 +225,7 @@ router.get("/stocks/:id", async (req,res) => {
 });
 
 //GET specific user profile with: transactions & portfolio
-router.get("/users/:id", authenticate, async (req,res) => {
+router.post("/users/:id", authenticate, async (req,res) => {
   //staging api call
   let profile = await axios.get(microservices.transactions + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
   profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
@@ -240,7 +240,7 @@ router.get("/users/:id", authenticate, async (req,res) => {
 });
 
 //GET filtered transactions based on fund id
-router.get("/users/:userId/fund/:fundId", authenticate, async (req, res) => {
+router.post("/users/:userId/fund/:fundId", authenticate, async (req, res) => {
   let customer = await axios.get(microservices.transactions + `/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
   if(!customer){
     res.json({error: "No user found."});
