@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const axios = require('axios').default;
 const { response } = require('express');
 const { Socket } = require('dgram');
-//testing
 
 var jsonParser = bodyParser.json();
 
