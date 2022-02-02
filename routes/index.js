@@ -121,6 +121,8 @@ router.post('/auth', async (req, res) => {
 
 router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
   if (!(req.body.fund_id && req.body.quantity && req.body.customerId)) return res.send('Missing fields!');
+  if (req.body.customerId != req.customerId) return res.send({error: 'user mismatch'});
+  
   (async () => {
     // get fund
     try {
