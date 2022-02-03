@@ -9,7 +9,7 @@ const { Socket } = require('dgram');
 var jsonParser = bodyParser.json();
 
 const microservices = {
-  auth: 'https://login-microservice-v1.herokuapp.com/',
+  auth: 'https://login-microservice-v1.herokuapp.com',
   transactions: 'https://transaction-microservice-v1.herokuapp.com',
   profile: 'https://user-profile-transaction.herokuapp.com',
   mutualFunds: 'https://immense-brushlands-56087.herokuapp.com',
