@@ -244,6 +244,7 @@ router.post("/users/:id", authenticate, async (req,res) => {
   let funds = await axios.get(microservices.mutualFunds + "/funds/").then(({ data }) => data).catch(err => err);
   // profile.funds = funds.filter(f => ids.includes(f.id));
   console.log(profile);
+  if (!profile) return res.send({error: 'profile error'});
   profile.ClientPortfolios.forEach(portfolio => {
     portfolio.fundData = funds.find(f => portfolio.fundKey === f.id)
   })
