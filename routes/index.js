@@ -325,6 +325,9 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   let quantitySold = 0;
   for(let i = 0; i < req.body.id.length; i++){
     let quantity = 0;
+    if(quantitySold === req.body.quantity){
+      continue
+    }
     if(quantityToSell > req.body.quantityArr[i]){
       quantity = req.body.quantity[i];
     } else {
