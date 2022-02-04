@@ -343,6 +343,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
     quantityToSell -= quantity;
     transactionLogs.push(temp);
   }
+  console.log('LOGGING TRANSACTIONS:');
   console.log(transactionLogs)
   //Return data or response to frontend  
   res.json(transactionLogs)
