@@ -308,10 +308,8 @@ router.post("/transactions/deposit", authenticate, async (req,res) => {
 //   quantity: Integer (Quantity to sell will fail if greater than available or if 0),
 //   CustomerId: Integer
 // }
-router.post("/transactions/sell", (req, res, next) => {
+router.post("/transactions/sell", authenticate, async (req,res) => {
   console.log('ATTEMPTING TO SELL');
-  next();
-}, authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
   let fund = await axios.get(micro.url('mutualFunds', '/funds/' + req.body.mutualFundId)).then(({ data }) => data).catch(err => err);
@@ -319,7 +317,7 @@ router.post("/transactions/sell", (req, res, next) => {
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
-  let profile = await axios.delete(micro.url('profile', '/portfolio' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
+  let profile = await axios.delete(micro.url('profile', '/portfolio/' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
   if(!profile) {
     return res.json({error: "something broke"})
   }
