@@ -328,10 +328,10 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
     if(quantitySold === req.body.quantity){
       continue
     }
-    if(quantityToSell > req.body.quantityArr[i]){
+    if(quantityToSell >= req.body.quantityArr[i]){
       quantity = req.body.quantity[i];
     } else {
-      quantity = req.body.quantity - quantitySold;
+      quantity = quantityToSell;
     }
     let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
