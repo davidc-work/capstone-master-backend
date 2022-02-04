@@ -336,7 +336,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
     }
     let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
-      id: id[i],
+      id: req.body.id[i],
       quantity: quantity,
       CustomerId: req.body.customer_id
     }).then(({ data }) => data).catch(err => err);
