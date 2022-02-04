@@ -6,15 +6,37 @@ const axios = require('axios').default;
 const { response } = require('express');
 const { Socket } = require('dgram');
 
+const secretKey = 'pmY6WrA2oO7Vfdd4zpfz97C9aWMLELqv';
+const paramStr = '?secretKey=' + secretKey;
+
 var jsonParser = bodyParser.json();
 
-const microservices = {
+function Micro() {
+  this.services = {
+    auth: 'https://login-microservice-v1.herokuapp.com',
+    transactions: 'https://transaction-microservice-v1.herokuapp.com',
+    profile: 'https://user-profile-transaction.herokuapp.com',
+    mutualFunds: 'https://immense-brushlands-56087.herokuapp.com',
+    stocks: 'http://stocks-microservice.herokuapp.com'
+  }
+  return this;
+}
+
+Micro.prototype.url = function(service, route) {
+  const url = this.services[service] + route + paramStr;
+  console.log(url);
+  return url;
+}
+
+const micro = new Micro();
+
+/*const microservices = {
   auth: 'https://login-microservice-v1.herokuapp.com',
   transactions: 'https://transaction-microservice-v1.herokuapp.com',
   profile: 'https://user-profile-transaction.herokuapp.com',
   mutualFunds: 'https://immense-brushlands-56087.herokuapp.com',
   stocks: 'http://stocks-microservice.herokuapp.com'
-}
+}*/
 
 function authenticate(req, res, next) {
   (async () => {
@@ -23,7 +45,7 @@ function authenticate(req, res, next) {
     let authData, i = 0;
     while (!authData && i < 10) {
       try {
-        authData = (await axios.post(microservices.auth + '/auth', {
+        authData = (await axios.post(micro.url('auth', '/auth'), {
           username: req.body.username,
           sessionID: req.body.sessionID
         })).data;
@@ -53,7 +75,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   let signupData, i = 0;
   while (!signupData && i < 10) {
     try {
-      signupData = (await axios.post(microservices.auth + '/signup', {
+      signupData = (await axios.post(micro.url('auth', '/signup'), {
         username: req.body.username,
         password: req.body.password
       })).data;
@@ -65,7 +87,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (signupData.error) return res.send(signupData);
 
   try {
-    var transactionData = (await axios.post(microservices.transactions + '/customers/create', {
+    var transactionData = (await axios.post(micro.url('transactions', '/customers/create'), {
       id: signupData.id
     })).data;
   } catch (e) { console.log(e) }
@@ -74,10 +96,10 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (transactionData.error) return res.send(transactionData);
 
   try {
-    var clientData = (await axios.post(microservices.profile + '/customer', {
+    var clientData = (await axios.post(micro.url('profile', 'customer'), {
       customer_id: signupData.id
     })).data;
-    var profileData = (await axios.post(microservices.profile + '/profile/' + signupData.id, {
+    var profileData = (await axios.post(micro.url('profile', '/profile/' + signupData.id), {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
@@ -96,7 +118,7 @@ router.post('/login', async (req, res) => {
   let loginData, i = 0;
   while (!loginData && i < 10) {
     try {
-      loginData = (await axios.post(microservices.auth + '/login', {
+      loginData = (await axios.post(micro.url('auth', '/login'), {
         username: req.body.username,
         password: req.body.password
       })).data;
@@ -113,7 +135,7 @@ router.post('/auth', async (req, res) => {
   let authData, i = 0;
   while (!authData && i < 10) {
     try {
-      authData = (await axios.post(microservices.auth + '/auth', {
+      authData = (await axios.post(micro.url('auth', '/auth'), {
         username: req.body.username,
         sessionID: req.body.sessionID
       })).data;
@@ -131,14 +153,14 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
   (async () => {
     // get fund
     try {
-      var fund = (await axios.get(microservices.mutualFunds + '/funds/' + req.body.fund_id)).data;
+      var fund = (await axios.get(micro.url('mutualFunds', '/funds/' + req.body.fund_id))).data;
       fund.price = +fund.price.slice(1);
       console.log('get fund success');
     } catch (e) { return res.send(e); }
     
     // transaction
     try {
-      var transaction = (await axios.post(microservices.transactions + '/transactions/create', {
+      var transaction = (await axios.post(micro.url('transactions', '/transactions/create'), {
         type: 'purchase',
         itemDescription: fund.name,
         quantity: req.body.quantity,
@@ -153,7 +175,7 @@ router.post('/purchase-fund', authenticate, jsonParser, (req, res) => {
 
     console.log('attempting portfolio addition');
     try {
-      var portfolio = (await axios.post(microservices.profile + '/portfolio', {
+      var portfolio = (await axios.post(micro.url('profile', '/portfolio'), {
         customer_id: req.body.customerId,
         fundKey: fund.id,
         quantity: req.body.quantity
@@ -179,8 +201,8 @@ router.get("/mutual-funds", async (req,res) => {
   console.log(req.body);
   console.log('customerId = ' + req.customerId);
   //staging api call
-  let funds = await axios.get(microservices.mutualFunds + "/funds").then(({ data }) => data).catch(err => err);
-  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
+  let funds = await axios.get(micro.url('mutualFunds', '/funds')).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(micro.url('stocks', '/stocks')).then(({ data }) => data).catch(err => err);
   // console.log(stocks);
   funds.forEach(fund => {
     //find and match each stocks that corresponds to each mutual fund
@@ -199,8 +221,8 @@ router.get("/mutual-funds", async (req,res) => {
 });
 
 router.get("/mutual-funds/:id", async (req,res) => {
-  let fund = await axios.get(microservices.mutualFunds + "/funds/" + req.params.id).then(({ data }) => data).catch(err => err);
-  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
+  let fund = await axios.get(micro.url('mutualFunds', '/funds/' + req.params.id)).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(micro.url('stocks', '/stocks')).then(({ data }) => data).catch(err => err);
   
   let stocksToSend = [];
   stocks.forEach(stock => {
@@ -218,7 +240,7 @@ router.get("/mutual-funds/:id", async (req,res) => {
 router.get("/stocks", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let stocks = await axios.get(microservices.stocks + "/stocks").then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(micro.url('stocks', '/stocks')).then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
@@ -227,7 +249,7 @@ router.get("/stocks", async (req,res) => {
 router.get("/stocks/:id", async (req,res) => {
   console.log(req.body);
   //staging api call
-  let stocks = await axios.get(microservices.stocks + "/stocks/"+req.params.id).then(({ data }) => data).catch(err => err);
+  let stocks = await axios.get(micro.url('stocks', '/stocks/' + req.params.id)).then(({ data }) => data).catch(err => err);
   //Return data or response to frontend  
   res.json(stocks);
 });
@@ -239,9 +261,9 @@ router.post("/users/:id", authenticate, async (req,res) => {
   if (req.customerId != req.params.id) return res.send({error: 'user mismatch'});
 
   //staging api call
-  let profile = await axios.get(microservices.profile + `/customer/${req.params.id}`).then(({ data }) => data).catch(err => err);
-  profile.transactions = await axios.get(microservices.transactions + `/customers/${req.params.id}`).then(({ data }) => data).catch(err => err);
-  let funds = await axios.get(microservices.mutualFunds + "/funds/").then(({ data }) => data).catch(err => err);
+  let profile = await axios.get(micro.url('profile', '/customer/' + req.params.id)).then(({ data }) => data).catch(err => err);
+  profile.transactions = await axios.get(micro.url('transactions', '/customers/' + req.params.id)).then(({ data }) => data).catch(err => err);
+  let funds = await axios.get(micro.url('mutualFunds', '/funds')).then(({ data }) => data).catch(err => err);
   // profile.funds = funds.filter(f => ids.includes(f.id));
   console.log(profile);
   if (!profile || !profile.ClientPortfolios) return res.send({error: 'profile error'});
@@ -256,7 +278,7 @@ router.post("/users/:id", authenticate, async (req,res) => {
 
 //GET filtered transactions based on fund id
 router.post("/users/:userId/fund/:fundId", authenticate, async (req, res) => {
-  let customer = await axios.get(microservices.transactions + `/customers/${req.params.userId}`).then(({ data }) => data).catch(err => err);
+  let customer = await axios.get(micro.url('transactions', '/customers/' + req.params.userId)).then(({ data }) => data).catch(err => err);
   if(!customer){
     res.json({error: "No user found."});
   } else {
@@ -273,7 +295,7 @@ router.post("/users/:userId/fund/:fundId", authenticate, async (req, res) => {
 router.post("/transactions/deposit", authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
-  let temp = await axios.post(microservices.transactions + "/transactions/create", req.body).then(({ data }) => data).catch(err => err);
+  let temp = await axios.post(micro.url('transactions', '/transactions/create'), req.body).then(({ data }) => data).catch(err => err);
   console.log(temp)
   //Return data or response to frontend  
   res.send(temp)
@@ -289,18 +311,18 @@ router.post("/transactions/deposit", authenticate, async (req,res) => {
 router.post("/transactions/sell", authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
-  let fund = await axios.get(microservices.mutualFunds + "/funds/"+req.body.mutualFundId).then(({ data }) => data).catch(err => err);
+  let fund = await axios.get(micro.url('mutualFunds', '/funds/' + req.body.mutualFundId)).then(({ data }) => data).catch(err => err);
   req.body.itemDescription = fund.name;
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
-  let profile = await axios.delete(`https://user-profile-transaction.herokuapp.com/portfolio/${req.body.CustomerId}/${req.body.fundKey}/${req.body.quantity}`)
+  let profile = await axios.delete(micro.url('profile', '/portfolio' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
   if(!profile) {
     return res.json({error: "something broke"})
   }
   let transactionLogs = []
   for(let i = 0; i < req.body.id.length; i++){
-    let temp = await axios.post(microservices.transactions + "/transactions/sell", {
+    let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
       id: id[i],
       quantity: req.body.quantityArr[i],
@@ -324,5 +346,5 @@ router.put("/user/:id", authenticate, async (req, res) => {
       delete req.body[key]
     }
   }
-  res.json(await axios.put(microservices.profile + "/profile/"+ req.params.id, req.body).then(({ data }) => data).catch(err => err));
+  res.json(await axios.put(micro.url('profile', '/profile/' + req.params.id), req.body).then(({ data }) => data).catch(err => err));
 })
