@@ -337,5 +337,5 @@ router.put("/user/:id", authenticate, async (req, res) => {
       delete req.body[key]
     }
   }
-  res.json(await axios.put(micro.url('profile' + '/profile/' + req.params.id), req.body).then(({ data }) => data).catch(err => err));
+  res.json(await axios.put(micro.url('profile', '/profile/' + req.params.id), req.body).then(({ data }) => data).catch(err => err));
 })
