@@ -308,8 +308,10 @@ router.post("/transactions/deposit", authenticate, async (req,res) => {
 //   quantity: Integer (Quantity to sell will fail if greater than available or if 0),
 //   CustomerId: Integer
 // }
-router.post("/transactions/sell", authenticate, async (req,res) => {
+router.post("/transactions/sell", (req, res, next) => {
   console.log('ATTEMPTING TO SELL');
+  next();
+}, authenticate, async (req,res) => {
   console.log(req.body);
   //staging api call
   let fund = await axios.get(micro.url('mutualFunds', '/funds/' + req.body.mutualFundId)).then(({ data }) => data).catch(err => err);
