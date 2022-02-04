@@ -309,6 +309,7 @@ router.post("/transactions/deposit", authenticate, async (req,res) => {
 //   CustomerId: Integer
 // }
 router.post("/transactions/sell", authenticate, async (req,res) => {
+  console.log('ATTEMPTING TO SELL');
   console.log(req.body);
   //staging api call
   let fund = await axios.get(micro.url('mutualFunds', '/funds/' + req.body.mutualFundId)).then(({ data }) => data).catch(err => err);
@@ -316,7 +317,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
-  let profile = await axios.delete(micro.url('profile', '/portfolio' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
+  let profile = await axios.delete(micro.url('profile', '/portfolio/' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
   if(!profile) {
     return res.json({error: "something broke"})
   }
@@ -335,7 +336,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
     }
     let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
-      id: id[i],
+      id: req.body.id[i],
       quantity: quantity,
       CustomerId: req.body.customer_id
     }).then(({ data }) => data).catch(err => err);
@@ -343,6 +344,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
     quantityToSell -= quantity;
     transactionLogs.push(temp);
   }
+  console.log('LOGGING TRANSACTIONS:');
   console.log(transactionLogs)
   //Return data or response to frontend  
   res.json(transactionLogs)
