@@ -320,14 +320,24 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   if(!profile) {
     return res.json({error: "something broke"})
   }
-  let transactionLogs = []
+  let transactionLogs = [];
+  let quantityToSell = req.body.quantity;
+  let quantitySold = 0;
   for(let i = 0; i < req.body.id.length; i++){
+    let quantity = 0;
+    if(quantityToSell > req.body.quantityArr[i]){
+      quantity = req.body.quantity[i];
+    } else {
+      quantity = req.body.quantity - quantitySold;
+    }
     let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
       id: id[i],
-      quantity: req.body.quantityArr[i],
+      quantity: quantity,
       CustomerId: req.body.customer_id
     }).then(({ data }) => data).catch(err => err);
+    quantitySold += quantity;
+    quantityToSell -= quantity;
     transactionLogs.push(temp);
   }
   console.log(transactionLogs)
