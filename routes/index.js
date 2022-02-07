@@ -5,8 +5,9 @@ const bodyParser = require('body-parser');
 const axios = require('axios').default;
 const { response } = require('express');
 const { Socket } = require('dgram');
+require('dotenv').config();
 
-const secretKey = 'pmY6WrA2oO7Vfdd4zpfz97C9aWMLELqv';
+const secretKey = process.env.secretKey;
 const paramStr = '?secretKey=' + secretKey;
 
 var jsonParser = bodyParser.json();
