@@ -96,7 +96,7 @@ router.post('/signup', jsonParser, async (req, res) => {
   if (transactionData.error) return res.send(transactionData);
 
   try {
-    var clientData = (await axios.post(micro.url('profile', 'customer'), {
+    var clientData = (await axios.post(micro.url('profile', '/customer'), {
       customer_id: signupData.id
     })).data;
     var profileData = (await axios.post(micro.url('profile', '/profile/' + signupData.id), {
