@@ -317,7 +317,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   req.body.mutualFundId = fund.id;
   req.body.pricePerUnit = fund.price;
   console.log(req.body);
-  let profile = await axios.delete(micro.url('profile', '/portfolio/' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
+  let profile = await axios.delete(micro.url('profile', '/portfolio/' + req.body.customer_id + '/' + req.body.mutualFundId + '/' + req.body.quantity));
   if(!profile) {
     return res.json({error: "There was an error with your profile. Please try again."})
   }
@@ -327,22 +327,29 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   for(let i = 0; i < req.body.id.length; i++){
     let quantity = 0;
     if(quantitySold === req.body.quantity){
+      console.log("------- SKIPPED -----")
       continue
     }
     if(quantityToSell >= req.body.quantityArr[i]){
       quantity = req.body.quantityArr[i];
+      console.log("----- Quantity >= --------", quantity)
     } else {
       quantity = quantityToSell;
+      console.log("----- Quantity ELSE --------", quantity)
     }
-    let transactionReceipt = await axios.post(micro.url('transactions', '/transactions/sell'), {
+    await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
       id: req.body.id[i],
       quantity: quantity,
       CustomerId: req.body.customer_id
-    }).then(({ data }) => data).catch(err => err);
-    quantitySold += transactionReceipt.quantity;
-    quantityToSell -= transactionReceipt.quantity;
-    transactionLogs.push(temp);
+    }).then( ({data}) => {
+      console.log(data)
+      quantitySold += data.transaction.quantity;
+      quantityToSell -= data.transaction.quantity;
+      console.log("-------- Quantities -------", quantitySold, quantityToSell )
+      transactionLogs.push(data);
+    }).catch(err => err);
+    
   }
   console.log('LOGGING TRANSACTIONS:');
   console.log(transactionLogs)
