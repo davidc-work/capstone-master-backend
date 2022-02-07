@@ -319,7 +319,7 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
   console.log(req.body);
   let profile = await axios.delete(micro.url('profile', '/portfolio/' + req.body.CustomerId + '/' + req.body.fundKey + '/' + req.body.quantity));
   if(!profile) {
-    return res.json({error: "something broke"})
+    return res.json({error: "There was an error with your profile. Please try again."})
   }
   let transactionLogs = [];
   let quantityToSell = req.body.quantity;
@@ -330,18 +330,18 @@ router.post("/transactions/sell", authenticate, async (req,res) => {
       continue
     }
     if(quantityToSell >= req.body.quantityArr[i]){
-      quantity = req.body.quantity[i];
+      quantity = req.body.quantityArr[i];
     } else {
       quantity = quantityToSell;
     }
-    let temp = await axios.post(micro.url('transactions', '/transactions/sell'), {
+    let transactionReceipt = await axios.post(micro.url('transactions', '/transactions/sell'), {
       type: "sell",
       id: req.body.id[i],
       quantity: quantity,
       CustomerId: req.body.customer_id
     }).then(({ data }) => data).catch(err => err);
-    quantitySold += quantity;
-    quantityToSell -= quantity;
+    quantitySold += transactionReceipt.quantity;
+    quantityToSell -= transactionReceipt.quantity;
     transactionLogs.push(temp);
   }
   console.log('LOGGING TRANSACTIONS:');
