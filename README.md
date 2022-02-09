@@ -2,6 +2,8 @@
 
 RVProtect: Buy and sell mutual funds.  Become a professional investor with our top of the line investing software!
 
+## About
+
 The "Master Backend" is responsible for making requests to each individual microservice.  This makes much of the development process easier, particularly in regards to organization.  It also makes authentication easier, as we only need to have it go through a singular server that runs authentication middleware before handling each account-specific request.
 
 Each microservice that the master backend is linked to requires a hardcoded secret key for security reasons.  Authentication was created from scratch, and uses a sessionID and username to determine whether a user's request is authentic.  It will respond with relevant data if, and only if, the sessionID and username are valid and match, and the requested information must be accessible to that specific customer.  If these criteria are not met, it will respond with an error message.
